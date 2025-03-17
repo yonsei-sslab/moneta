@@ -1,0 +1,38 @@
+# Map git author names and email addresses to canonical/preferred form.
+<Vineet.Gupta1@synopsys.com>	<vgupta@synopsys.com>
+<ak@linux.intel.com>	<ak@suse.de>
+<damir@altlinux.org>	<damir@altlinux.ru>
+<dgilbert@redhat.com>	<dave@treblig.org>
+<edgar.iglesias@gmail.com>	<edgar@axis.com>
+<haoyouab@gmail.com>	<08826794brmt@gmail.com>
+<holger@freyther.de>	<zecke@selfish.org>
+<kirill@shutemov.name>	<kirill.shutemov@linux.intel.com>
+<ldv@strace.io>		<ldv@altlinux.org>
+<mark.hills@framestore.com>	<Mark.Hills@framestore.com>
+<nahim+dev@naam.me>	<naam@lse.epita.fr>
+<patrik.r.jakobsson@gmail.com>	<patrik.jakobsson@linux.intel.com>
+<paul.chaignon@gmail.com>	<paul@cilium.io>
+<paul.chaignon@gmail.com>	<paul@isovalent.com>
+<quentin.monnet@netronome.com>	<quentin.monnet@6wind.com>
+<schwab@linux-m68k.org>	<aschwab@redhat.com>
+<schwab@linux-m68k.org>	<schwab@redhat.com>
+<schwab@linux-m68k.org>	<schwab@suse.de>
+<steve@einval.com>	<steve.mcintyre@linaro.org>
+<svens@stackframe.org>	<svens@linux.ibm.com>
+<thomas.de.schampheleire@gmail.com>	<thomas.de_schampheleire@nokia.com>
+<vda.linux@googlemail.com>	<dvlasenk@redhat.com>
+<vincent@gentoo.org>	<vincent.riera@imgtec.com>
+<will@williammanley.net>	<william.manley@youview.com>
+Ahelenia Ziemiańska	<nabijaczleweli@nabijaczleweli.xyz>
+Ahelenia Ziemiańska	<nabijaczleweli@nabijaczleweli.xyz>	<nabijaczleweli@gmail.com>
+Carmelo Amoroso	<carmelo.amoroso@st.com>
+Chen Jingpiao	<chenjingpiao@gmail.com>
+Chen Jingpiao	<chenjingpiao@gmail.com>	<chenjingpiao@foxmail.com>
+Edgar Kaziakhmedov	<edgar.kaziakhmedov@virtuozzo.com>	<edos@linux.com>
+Elvira Khabirova	<lineprinter@altlinux.org>	<lineprinter0@gmail.com>
+Eugene Syromyatnikov	<evgsyr@gmail.com>
+Eugene Syromyatnikov	<evgsyr@gmail.com>	<esyr@redhat.com>
+Frederik Schüler	<fs@debian.org>
+Ma Jun	<majun258@linux.alibaba.com>
+Md Haris Iqbal	<haris.phnx@gmail.com>
+Ákos Uzonyi	<uzonyi.akos@gmail.com>

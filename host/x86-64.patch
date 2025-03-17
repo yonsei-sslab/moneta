@@ -1,0 +1,470 @@
+diff --git a/.gitignore b/.gitignore
+index 1515604900a0..41ec31547e03 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -76,7 +76,7 @@ modules.order
+ #
+ # Debian directory (make deb-pkg)
+ #
+-#/debian/
++/debian/
+ 
+ #
+ # Snap directory (make snap-pkg)
+@@ -162,3 +162,6 @@ x509.genkey
+ 
+ # Documentation toolchain
+ sphinx_*/
++
++# Scripts
++/Scripts
+\ No newline at end of file
+diff --git a/arch/x86/include/asm/kvm_host.h b/arch/x86/include/asm/kvm_host.h
+index 19c04412f6e1..a7544083cfad 100644
+--- a/arch/x86/include/asm/kvm_host.h
++++ b/arch/x86/include/asm/kvm_host.h
+@@ -1667,6 +1667,7 @@ void kvm_mmu_uninit_vm(struct kvm *kvm);
+ 
+ void kvm_mmu_after_set_cpuid(struct kvm_vcpu *vcpu);
+ void kvm_mmu_reset_context(struct kvm_vcpu *vcpu);
++int reset_cow_unsync_bitmap(struct kvm *kvm, struct kvm_memory_slot *memslot);
+ void kvm_mmu_slot_remove_write_access(struct kvm *kvm,
+ 				      const struct kvm_memory_slot *memslot,
+ 				      int start_level);
+diff --git a/arch/x86/kvm/Kconfig b/arch/x86/kvm/Kconfig
+index e3cbd7706136..a963bae79bd0 100644
+--- a/arch/x86/kvm/Kconfig
++++ b/arch/x86/kvm/Kconfig
+@@ -98,6 +98,12 @@ config X86_SGX_KVM
+ 
+ 	  If unsure, say N.
+ 
++config KVM_AGAMOTTO
++	def_bool y
++	bool "KVM extension for Agamotto"
++	help
++	  Extends KVM to support Agamotto hypercalls.
++
+ config KVM_AMD
+ 	tristate "KVM for AMD processors support"
+ 	depends on KVM
+diff --git a/arch/x86/kvm/Makefile b/arch/x86/kvm/Makefile
+index f453a0f96e24..9f933e6d4547 100644
+--- a/arch/x86/kvm/Makefile
++++ b/arch/x86/kvm/Makefile
+@@ -20,6 +20,7 @@ endif
+ 
+ kvm-$(CONFIG_X86_64) += mmu/tdp_iter.o mmu/tdp_mmu.o
+ kvm-$(CONFIG_KVM_XEN)	+= xen.o
++kvm-$(CONFIG_KVM_AGAMOTTO) += agamotto.o
+ 
+ kvm-intel-y		+= vmx/vmx.o vmx/vmenter.o vmx/pmu_intel.o vmx/vmcs12.o \
+ 			   vmx/evmcs.o vmx/nested.o vmx/posted_intr.o
+diff --git a/arch/x86/kvm/agamotto.c b/arch/x86/kvm/agamotto.c
+new file mode 100644
+index 000000000000..ec7aca50d7f7
+--- /dev/null
++++ b/arch/x86/kvm/agamotto.c
+@@ -0,0 +1,53 @@
++#define pr_fmt(fmt) "agamotto: " fmt
++
++#include "x86.h"
++
++#include <linux/kvm_host.h>
++
++static int kvm_agamotto_hypercall_complete_userspace(struct kvm_vcpu *vcpu)
++{
++	kvm_register_write(vcpu, VCPU_REGS_RAX, vcpu->run->hypercall.ret);
++	return kvm_skip_emulated_instruction(vcpu);
++}
++
++int kvm_agamotto_hypercall(struct kvm_vcpu *vcpu)
++{
++	unsigned long a0, a1, a2, a3, ret;
++
++	a0 = kvm_register_read(vcpu, VCPU_REGS_RBX);
++	a1 = kvm_register_read(vcpu, VCPU_REGS_RCX);
++	a2 = kvm_register_read(vcpu, VCPU_REGS_RDX);
++	a3 = kvm_register_read(vcpu, VCPU_REGS_RSI);
++
++	switch (a0) {
++	case 0:
++		vcpu->run->exit_reason = KVM_EXIT_AGAMOTTO_BEGIN;
++		break;
++	case 1:
++		vcpu->run->exit_reason = KVM_EXIT_AGAMOTTO_END;
++		vcpu->run->hypercall.args[0] = a1;
++		break;
++	case 10:
++		vcpu->run->exit_reason = KVM_EXIT_AGAMOTTO_DEBUG;
++		vcpu->run->hypercall.args[0] = a1;
++		vcpu->run->hypercall.args[1] = a2;
++		vcpu->run->hypercall.args[2] = a3;
++		break;
++	default:
++		ret = -KVM_EPERM;
++		goto out;
++		break;
++	}
++
++	vcpu->arch.complete_userspace_io =
++		kvm_agamotto_hypercall_complete_userspace;
++
++	return 0;
++
++out:
++	kvm_register_write(vcpu, VCPU_REGS_RAX, ret);
++
++	++vcpu->stat.hypercalls;
++	return kvm_skip_emulated_instruction(vcpu);
++}
++EXPORT_SYMBOL_GPL(kvm_agamotto_hypercall);
+\ No newline at end of file
+diff --git a/arch/x86/kvm/agamotto.h b/arch/x86/kvm/agamotto.h
+new file mode 100644
+index 000000000000..17c65e92554e
+--- /dev/null
++++ b/arch/x86/kvm/agamotto.h
+@@ -0,0 +1,6 @@
++#ifndef __ARCH_X86_KVM_AGAMOTTO_H__
++#define __ARCH_X86_KVM_AGAMOTTO_H__
++
++int kvm_agamotto_hypercall(struct kvm_vcpu *vcpu);
++
++#endif
+\ No newline at end of file
+diff --git a/arch/x86/kvm/mmu/mmu.c b/arch/x86/kvm/mmu/mmu.c
+index 43a270705a04..6ea1e6f3827a 100644
+--- a/arch/x86/kvm/mmu/mmu.c
++++ b/arch/x86/kvm/mmu/mmu.c
+@@ -1028,10 +1028,15 @@ static void rmap_remove(struct kvm *kvm, u64 *spte)
+ 	struct kvm_mmu_page *sp;
+ 	gfn_t gfn;
+ 	struct kvm_rmap_head *rmap_head;
++	unsigned int index;
+ 
+ 	sp = sptep_to_sp(spte);
+-	gfn = kvm_mmu_page_get_gfn(sp, spte - sp->spt);
+ 
++	// clear dma active trace marker
++	index = spte - sp->spt;
++	__clear_bit(index, sp->dma_trace_active);
++
++	gfn = kvm_mmu_page_get_gfn(sp, index);
+ 	/*
+ 	 * Unlike rmap_add, rmap_remove does not run in the context of a vCPU
+ 	 * so we have to determine which memslots to use based on context
+@@ -3948,6 +3953,20 @@ static bool kvm_arch_setup_async_pf(struct kvm_vcpu *vcpu, gpa_t cr2_or_gpa,
+ 				  kvm_vcpu_gfn_to_hva(vcpu, gfn), &arch);
+ }
+ 
++int dma_stop_trace(struct kvm_vcpu *vcpu, gpa_t gpa)
++{
++	return 0;
++}
++EXPORT_SYMBOL(dma_stop_trace);
++
++
++// remove ept entry -> this will trigger mmio handling (hopefully)
++int dma_start_trace(struct kvm_vcpu *vcpu, gpa_t gpa)
++{
++	return 0;
++}
++EXPORT_SYMBOL(dma_start_trace);
++
+ void kvm_arch_async_page_ready(struct kvm_vcpu *vcpu, struct kvm_async_pf *work)
+ {
+ 	int r;
+@@ -5922,6 +5941,11 @@ void kvm_mmu_slot_remove_write_access(struct kvm *kvm,
+ 	}
+ }
+ 
++int reset_cow_unsync_bitmap(struct kvm *kvm, struct kvm_memory_slot *memslot)
++{
++	return 0;
++}
++
+ /* Must be called with the mmu_lock held in write-mode. */
+ void kvm_mmu_try_split_huge_pages(struct kvm *kvm,
+ 				   const struct kvm_memory_slot *memslot,
+diff --git a/arch/x86/kvm/mmu/mmu_internal.h b/arch/x86/kvm/mmu/mmu_internal.h
+index bd2a26897b97..53eccf4d0770 100644
+--- a/arch/x86/kvm/mmu/mmu_internal.h
++++ b/arch/x86/kvm/mmu/mmu_internal.h
+@@ -85,6 +85,10 @@ struct kvm_mmu_page {
+ 	/* Number of writes since the last time traversal visited this page.  */
+ 	atomic_t write_flooding_count;
+ 
++	// mark pages for later dma tracing once the spte entry is added
++	DECLARE_BITMAP(dma_trace_active, 512);
++	DECLARE_BITMAP(cow_unsync_bitmap, 512);
++
+ #ifdef CONFIG_X86_64
+ 	/* Used for freeing the page asynchronously if it is a TDP MMU page. */
+ 	struct rcu_head rcu_head;
+diff --git a/arch/x86/kvm/mmu/spte.h b/arch/x86/kvm/mmu/spte.h
+index e09bdcf1e47c..bc1731a98aa0 100644
+--- a/arch/x86/kvm/mmu/spte.h
++++ b/arch/x86/kvm/mmu/spte.h
+@@ -208,6 +208,11 @@ static inline bool is_mmio_spte(u64 spte)
+ 	       likely(enable_mmio_caching);
+ }
+ 
++static inline bool is_shadow_present_mmio_pte(u64 pte)
++{
++	return (pte != 0);
++}
++
+ static inline bool is_shadow_present_pte(u64 pte)
+ {
+ 	return !!(pte & SPTE_MMU_PRESENT_MASK);
+diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
+index 5bb6056927a1..a69718dc10c1 100644
+--- a/arch/x86/kvm/x86.c
++++ b/arch/x86/kvm/x86.c
+@@ -31,6 +31,8 @@
+ #include "lapic.h"
+ #include "xen.h"
+ 
++#include "agamotto.h"
++
+ #include <linux/clocksource.h>
+ #include <linux/interrupt.h>
+ #include <linux/kvm.h>
+@@ -9370,6 +9372,11 @@ int kvm_emulate_hypercall(struct kvm_vcpu *vcpu)
+ 	}
+ 
+ 	if (static_call(kvm_x86_get_cpl)(vcpu) != 0) {
++#ifdef CONFIG_KVM_AGAMOTTO
++		if (nr == KVM_HC_AGAMOTTO) {
++			return kvm_agamotto_hypercall(vcpu);
++		}
++#endif
+ 		ret = -KVM_EPERM;
+ 		goto out;
+ 	}
+diff --git a/include/linux/kvm_host.h b/include/linux/kvm_host.h
+index e5428febae99..f3e59efe1d28 100644
+--- a/include/linux/kvm_host.h
++++ b/include/linux/kvm_host.h
+@@ -1106,8 +1106,11 @@ enum kvm_mr_change {
+ 	KVM_MR_DELETE,
+ 	KVM_MR_MOVE,
+ 	KVM_MR_FLAGS_ONLY,
++	KVM_MR_FLAGS_NOT_PRESENT,
+ };
+ 
++int dma_start_trace(struct kvm_vcpu *vcpu, gpa_t gpa);
++int dma_stop_trace(struct kvm_vcpu *vcpu, gpa_t gpa);
+ int kvm_set_memory_region(struct kvm *kvm,
+ 			  const struct kvm_userspace_memory_region *mem);
+ int __kvm_set_memory_region(struct kvm *kvm,
+diff --git a/include/uapi/linux/kvm.h b/include/uapi/linux/kvm.h
+index c74e05017329..722acdfcc988 100644
+--- a/include/uapi/linux/kvm.h
++++ b/include/uapi/linux/kvm.h
+@@ -111,6 +111,8 @@ struct kvm_userspace_memory_region {
+ #define KVM_MEM_LOG_DIRTY_PAGES	(1UL << 0)
+ #define KVM_MEM_READONLY	(1UL << 1)
+ 
++#define KVM_MEM_NOT_PRESENT	(1UL << 1)
++
+ /* for KVM_IRQ_LINE */
+ struct kvm_irq_level {
+ 	/*
+@@ -234,6 +236,10 @@ struct kvm_xen_exit {
+ #define KVM_S390_GET_SKEYS_NONE   1
+ #define KVM_S390_SKEYS_MAX        1048576
+ 
++#define KVM_EXIT_AGAMOTTO_BEGIN  100
++#define KVM_EXIT_AGAMOTTO_END    101
++#define KVM_EXIT_AGAMOTTO_DEBUG  110
++
+ #define KVM_EXIT_UNKNOWN          0
+ #define KVM_EXIT_EXCEPTION        1
+ #define KVM_EXIT_IO               2
+@@ -1896,6 +1902,11 @@ struct kvm_sev_launch_update_data {
+ };
+ 
+ 
++#define KVM_ENABLE_DMA_TRACE      _IO(KVMIO,   0xc2)
++#define KVM_DISABLE_DMA_TRACE     _IO(KVMIO,   0xc3)
++#define KVM_UPDATE_USER_MEMORY_REGION _IOW(KVMIO, 0xc4, \
++					struct kvm_userspace_memory_region)
++
+ struct kvm_sev_launch_secret {
+ 	__u64 hdr_uaddr;
+ 	__u32 hdr_len;
+diff --git a/include/uapi/linux/kvm_para.h b/include/uapi/linux/kvm_para.h
+index 960c7e93d1a9..6747a1be6aa2 100644
+--- a/include/uapi/linux/kvm_para.h
++++ b/include/uapi/linux/kvm_para.h
+@@ -18,6 +18,8 @@
+ #define KVM_EPERM		EPERM
+ #define KVM_EOPNOTSUPP		95
+ 
++#define KVM_HC_AGAMOTTO		20
++
+ #define KVM_HC_VAPIC_POLL_IRQ		1
+ #define KVM_HC_MMU_OP			2
+ #define KVM_HC_FEATURES			3
+diff --git a/virt/kvm/kvm_main.c b/virt/kvm/kvm_main.c
+index 201f1411a466..dc3ab5a7361b 100644
+--- a/virt/kvm/kvm_main.c
++++ b/virt/kvm/kvm_main.c
+@@ -1853,6 +1853,61 @@ static bool kvm_check_memslot_overlap(struct kvm_memslots *slots, int id,
+  *
+  * Must be called holding kvm->slots_lock for write.
+  */
++
++int __kvm_update_memory_region(struct kvm *kvm,
++			    const struct kvm_userspace_memory_region *mem)
++{
++	int r;
++	unsigned long npages;
++	struct kvm_memory_slot *slot;
++	int as_id, id;
++
++	r = check_memory_region_flags(mem);
++	if (r)
++		goto out;
++
++	r = -EINVAL;
++	as_id = mem->slot >> 16;
++	id = (u16)mem->slot;
++
++	/* General sanity checks */
++	if (mem->memory_size & (PAGE_SIZE - 1))
++		goto out;
++	if (mem->guest_phys_addr & (PAGE_SIZE - 1))
++		goto out;
++	/* We can read the guest memory with __xxx_user() later on. */
++	if ((id < KVM_USER_MEM_SLOTS) &&
++	    ((mem->userspace_addr & (PAGE_SIZE - 1)) ||
++	     !access_ok((void __user *)(unsigned long)mem->userspace_addr,
++			mem->memory_size)))
++		goto out;
++	if (as_id >= KVM_ADDRESS_SPACE_NUM || id >= KVM_MEM_SLOTS_NUM)
++		goto out;
++	if (mem->guest_phys_addr + mem->memory_size < mem->guest_phys_addr)
++		goto out;
++
++	slot = id_to_memslot(__kvm_memslots(kvm, as_id), id);
++	npages = mem->memory_size >> PAGE_SHIFT;
++
++	if (npages > KVM_MEM_MAX_NR_PAGES)
++		goto out;
++
++	//new.userspace_addr = mem->userspace_addr;
++	slot->userspace_addr = mem->userspace_addr;
++	//reset_cow_unsync_bitmap(kvm, slot);
++	//kvm_mmu_slot_remove_write_access(kvm, slot);
++	// we need to remove all mappings because
++	// the host migth trigger a cow
++	// leaving the guest with a stale spt entry
++	kvm_arch_flush_shadow_memslot(kvm, slot);
++
++	return 0;
++
++out:
++	return r;
++}
++EXPORT_SYMBOL_GPL(__kvm_update_memory_region);
++
+ int __kvm_set_memory_region(struct kvm *kvm,
+ 			    const struct kvm_userspace_memory_region *mem)
+ {
+@@ -1957,6 +2012,18 @@ int __kvm_set_memory_region(struct kvm *kvm,
+ }
+ EXPORT_SYMBOL_GPL(__kvm_set_memory_region);
+ 
++int kvm_update_memory_region(struct kvm *kvm,
++			  const struct kvm_userspace_memory_region *mem)
++{
++	int r;
++
++	mutex_lock(&kvm->slots_lock);
++	r = __kvm_update_memory_region(kvm, mem);
++	mutex_unlock(&kvm->slots_lock);
++	return r;
++}
++EXPORT_SYMBOL_GPL(kvm_update_memory_region);
++
+ int kvm_set_memory_region(struct kvm *kvm,
+ 			  const struct kvm_userspace_memory_region *mem)
+ {
+@@ -1969,6 +2036,33 @@ int kvm_set_memory_region(struct kvm *kvm,
+ }
+ EXPORT_SYMBOL_GPL(kvm_set_memory_region);
+ 
++static int kvm_vm_ioctl_disable_dma_trace(struct kvm *kvm, gva_t gva)
++{
++	// todo: fix vcpu index
++	if (atomic_read(&kvm->online_vcpus) > 0) {
++		return dma_stop_trace(xa_load(&kvm->vcpu_array, 0), gva);
++	}
++	return -EINVAL;
++}
++
++static int kvm_vm_ioctl_enable_dma_trace(struct kvm *kvm, gva_t gva)
++{
++	// todo: fix vcpu index
++	if (atomic_read(&kvm->online_vcpus) > 0) {
++		return dma_start_trace(xa_load(&kvm->vcpu_array, 0), gva);
++	}
++	return -EINVAL;
++}
++
++static int kvm_vm_ioctl_update_memory_region(struct kvm *kvm,
++					  struct kvm_userspace_memory_region *mem)
++{
++	if ((u16)mem->slot >= KVM_USER_MEM_SLOTS)
++		return -EINVAL;
++
++	return kvm_update_memory_region(kvm, mem);
++}
++
+ static int kvm_vm_ioctl_set_memory_region(struct kvm *kvm,
+ 					  struct kvm_userspace_memory_region *mem)
+ {
+@@ -2509,6 +2603,7 @@ static int hva_to_pfn_remapped(struct vm_area_struct *vma,
+ 	spinlock_t *ptl;
+ 	int r;
+ 
++	write_fault = true;
+ 	r = follow_pte(vma->vm_mm, addr, &ptep, &ptl);
+ 	if (r) {
+ 		/*
+@@ -4531,6 +4626,17 @@ static long kvm_vm_ioctl(struct file *filp,
+ 	case KVM_CREATE_VCPU:
+ 		r = kvm_vm_ioctl_create_vcpu(kvm, arg);
+ 		break;
++	case KVM_UPDATE_USER_MEMORY_REGION: {
++		struct kvm_userspace_memory_region kvm_userspace_mem;
++
++		r = -EFAULT;
++		if (copy_from_user(&kvm_userspace_mem, argp,
++						sizeof(kvm_userspace_mem)))
++			goto out;
++
++		r = kvm_vm_ioctl_update_memory_region(kvm, &kvm_userspace_mem);
++		break;
++	}
+ 	case KVM_ENABLE_CAP: {
+ 		struct kvm_enable_cap cap;
+ 
+@@ -4551,6 +4657,14 @@ static long kvm_vm_ioctl(struct file *filp,
+ 		r = kvm_vm_ioctl_set_memory_region(kvm, &kvm_userspace_mem);
+ 		break;
+ 	}
++	case KVM_ENABLE_DMA_TRACE: {
++		r = kvm_vm_ioctl_enable_dma_trace(kvm, arg);
++		break;
++	}
++	case KVM_DISABLE_DMA_TRACE: {
++		r = kvm_vm_ioctl_disable_dma_trace(kvm, arg);
++		break;
++	}
+ 	case KVM_GET_DIRTY_LOG: {
+ 		struct kvm_dirty_log log;
+ 

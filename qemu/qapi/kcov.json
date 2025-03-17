@@ -1,0 +1,83 @@
+# -*- Mode: Python -*-
+#
+
+##
+# = Kcov
+##
+
+{ 'include': 'common.json' }
+
+##
+# @KcovArea:
+#
+# todo
+#
+# @size: the size
+#
+# @offset: the offset
+#
+# Since: 0.14.0
+##
+{ 'struct': 'KcovArea', 'data': {'size': 'int',
+                                  'offset': 'int'}}
+
+
+##
+# @kcov_get_area_offset:
+#
+# todo
+#
+# Returns: offset.
+#
+# Example:
+#
+# -> { "execute": "kcov_get_area_offset",
+#      "arguments": {} }
+# <- { "return": {"offset": 0} }
+#
+# Since: 1.0
+#
+##
+{'command': 'kcov_get_area_offset', 'returns': 'KcovArea'}
+
+##
+# @kcov_print_coverage:
+#
+# todo
+#
+# Returns: Nothing on success
+#
+# Example:
+#
+# -> { "execute": "kcov_print_coverage",
+#      "arguments": {} }
+# <- { "return": {} }
+#
+# Since: 1.0
+#
+##
+{ 'command': 'kcov_print_coverage'}
+
+
+##
+# @kcov_ioctl:
+#
+# todo
+#
+# @cmd: the ioctl command id
+# @arg: the ioctl command arg
+#
+# Returns: Nothing on success
+#
+# Example:
+#
+# -> { "execute": "kcov_ioctl",
+#      "arguments": { "cmd": "1", "arg": "2" } }
+# <- { "return": {} }
+#
+# Since: 1.0
+#
+##
+{ 'command': 'kcov_ioctl', 'data': {'cmd': 'int', 'arg': 'int'}}
+
+

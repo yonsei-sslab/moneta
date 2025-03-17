@@ -1,0 +1,12 @@
+*.swp
+*~
+*.cfg
+workdir*
+
+bin/
+
+# jetbrains goland
+.idea
+log
+
+eval

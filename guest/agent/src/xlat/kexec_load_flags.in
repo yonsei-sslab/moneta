@@ -1,0 +1,3 @@
+#unconditional
+KEXEC_ON_CRASH
+KEXEC_PRESERVE_CONTEXT

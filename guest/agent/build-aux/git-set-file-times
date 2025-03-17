@@ -1,0 +1,43 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+# Sets mtime and atime of files to the latest commit time in git.
+#
+# This is useful after the first clone of the rsync repository BEFORE you
+# do any building.  It is also safe if you have done a "make distclean".
+
+my %ls;
+my $commit_time;
+my $prefix = @ARGV && $ARGV[0] =~ s/^--prefix=// ? shift : '';
+
+my $top_dir = `git rev-parse --show-toplevel`;
+exit 1 unless $top_dir;
+chomp($top_dir);
+
+chdir $top_dir or die "Failed to chdir to $top_dir\: $!\n";
+
+$/ = "\0";
+open FH, '-|', qw( git ls-files -z ) or die "Failed to fork: $!";
+while (<FH>) {
+    chomp;
+    $ls{$_} = $_;
+}
+close FH;
+
+$/ = "\n";
+open FH, '-|', qw( git log -r --name-only --no-color --pretty=raw -z ), @ARGV or die "Failed to fork: $!";
+while (<FH>) {
+    chomp;
+    if (/^committer .*? (\d+) (?:[\-\+]\d+)$/) {
+	$commit_time = $1;
+    } elsif (s/\0\0commit [a-f0-9]{40}$// || s/\0$//) {
+	my @files = delete @ls{split(/\0/, $_)};
+	@files = grep { defined $_ } @files;
+	next unless @files;
+	map { s/^/$prefix/ } @files;
+	utime $commit_time, $commit_time, @files;
+    }
+    last unless %ls;
+}
+close FH;

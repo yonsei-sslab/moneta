@@ -1,0 +1,8 @@
+common-obj-$(CONFIG_PCI) += pci.o
+common-obj-$(CONFIG_VIRTIO) += virtio.o
+common-obj-$(CONFIG_PCI) += kcov_dev.o
+common-obj-$(CONFIG_PCI) += kvm_api_test.o
+common-obj-$(CONFIG_PCI) += pci-i2c.o
+common-obj-$(CONFIG_PCI) += i2c.o
+common-obj-$(CONFIG_SD) += sd.o
+common-obj-$(CONFIG_USB) += usb.o

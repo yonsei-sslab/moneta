@@ -1,0 +1,5 @@
+common-obj-$(CONFIG_SOFTMMU) += pci-nvidia.o
+common-obj-$(CONFIG_SOFTMMU) += pci-amdgpu.o
+common-obj-$(CONFIG_SOFTMMU) += pci-nvidia1650.o
+common-obj-$(CONFIG_SOFTMMU) += pci-nvidia4060ti.o
+obj-$(TARGET_AARCH64) += platform-mali.o

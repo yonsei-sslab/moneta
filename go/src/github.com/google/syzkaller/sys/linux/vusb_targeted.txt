@@ -1,0 +1,1020 @@
+# Copyright 2019 syzkaller project authors. All rights reserved.
+# Use of this source code is governed by Apache 2 LICENSE that can be found in the LICENSE file.
+
+include <linux/types.h>
+include <linux/byteorder/generic.h>
+
+include <uapi/linux/usb/ch9.h>
+include <uapi/linux/usb/ch11.h>
+
+include <uapi/linux/usb/audio.h>
+include <uapi/linux/if_ether.h>
+include <linux/interrupt.h>
+include <drivers/net/usb/asix.h>
+include <net/nfc/nci.h>
+
+resource fd_usb_serial[fd_usb]
+resource fd_usb_storage[fd_usb]
+resource fd_usb_sound[fd_usb]
+resource fd_usb_rsi_9113[fd_usb]
+resource fd_usb_rsi_9116[fd_usb]
+resource fd_usb_rt2x00[fd_usb]
+resource fd_usb_rtl8192cu[fd_usb]
+resource fd_usb_mt76[fd_usb]
+resource fd_usb_mwifiex_8766[fd_usb]
+#resource fd_usb_mwifiex_8797[fd_usb]
+#resource fd_usb_mwifiex_8801[fd_usb]
+#resource fd_usb_mwifiex_8997[fd_usb]
+resource fd_usb_ar5523[fd_usb]
+resource fd_usb_ar9287[fd_usb]
+resource fd_usb_brcm_43242[fd_usb]
+resource fd_usb_bfusb[fd_usb]
+resource fd_usb_btusb[fd_usb]
+resource fd_usb_usx2y[fd_usb]
+resource fd_usb_b2c2[fd_usb]
+resource fd_usb_si470x[fd_usb]
+resource fd_usb_nfcmrvl[fd_usb]
+resource fd_usb_pn533[fd_usb]
+resource fd_usb_iforce[fd_usb]
+resource fd_usb_go7007[fd_usb]
+
+syz_usb_ep_read$hid(fd fd_usb_hid, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$hid(fd fd_usb_hid, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the SERIAL device.
+syz_usb_connect$serial(speed flags[usb_device_speed], dev_len len[dev], dev ptr[in, usb_device_descriptor_serial], conn_descs ptr[in, vusb_connect_descriptors]) fd_usb_serial
+syz_usb_control_io$serial(fd fd_usb_serial, descs ptr[in, vusb_descriptors], resps ptr[in, vusb_responses])
+syz_usb_ep_read$serial(fd fd_usb_serial, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$serial(fd fd_usb_serial, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the STORAGE device.
+syz_usb_connect$storage(speed flags[usb_device_speed], dev_len len[dev], dev ptr[in, usb_device_descriptor_storage], conn_descs ptr[in, vusb_connect_descriptors]) fd_usb_storage
+syz_usb_control_io$storage(fd fd_usb_storage, descs ptr[in, vusb_descriptors], resps ptr[in, vusb_responses])
+syz_usb_ep_read$storage(fd fd_usb_storage, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$storage(fd fd_usb_storage, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the SOUND device.
+syz_usb_connect$sound(speed flags[usb_device_speed], dev_len len[dev], dev ptr[in, usb_device_descriptor_sound], conn_descs ptr[in, vusb_connect_descriptors]) fd_usb_sound
+syz_usb_control_io$sound(fd fd_usb_sound, descs ptr[in, vusb_descriptors], resps ptr[in, vusb_responses])
+syz_usb_ep_read$sound(fd fd_usb_sound, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$sound(fd fd_usb_sound, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the drivers/net/wireless/rsi.
+syz_usb_connect$rsi_9113(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_rsi_9113], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_rsi_9113
+syz_usb_control_io$rsi_9113(fd fd_usb_rsi_9113, descs ptr[in, vusb_descriptors], resps ptr[in, vusb_responses])
+syz_usb_connect$rsi_9116(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_rsi_9116], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_rsi_9116
+syz_usb_control_io$rsi_9116(fd fd_usb_rsi_9116, descs ptr[in, vusb_descriptors], resps ptr[in, vusb_responses])
+syz_usb_ep_read$rsi(fd fd_usb, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$rsi(fd fd_usb, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the drivers/net/wireless/ralink/rt2x00.
+syz_usb_connect$rt2x00(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_rt2x00], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_rt2x00
+syz_usb_control_io$rt2x00(fd fd_usb_rt2x00, descs ptr[in, vusb_descriptors_rt2x00], resps ptr[in, vusb_responses_rt2x00])
+syz_usb_ep_read$rt2x00(fd fd_usb_rt2x00, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$rt2x00(fd fd_usb_rt2x00, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the drivers/net/wireless/realtek/rtlwifi.
+syz_usb_connect$rtl8192cu(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_rtl8192cu], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_rtl8192cu
+syz_usb_control_io$rtl8192cu(fd fd_usb_rtl8192cu, descs ptr[in, vusb_descriptors_rtl8192cu], resps ptr[in, vusb_responses_rtl8192cu])
+syz_usb_ep_read$rtl8192cu(fd fd_usb_rtl8192cu, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$rtl8192cu(fd fd_usb_rtl8192cu, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the drivers/net/wireless/mediatek/mt76.
+syz_usb_connect$mt76(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_mt76], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_mt76
+syz_usb_control_io$mt76(fd fd_usb_mt76, descs ptr[in, vusb_descriptors], resps ptr[in, vusb_responses])
+syz_usb_ep_read$mt76(fd fd_usb_mt76, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$mt76(fd fd_usb_mt76, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the drivers/net/wireless/marvell/mwifiex.
+syz_usb_connect$mwifiex_8766(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_mwifiex_8766], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_mwifiex_8766
+syz_usb_control_io$mwifiex_8766(fd fd_usb_mwifiex_8766, descs ptr[in, vusb_descriptors], resps ptr[in, vusb_responses])
+syz_usb_ep_read$mwifiex_8766(fd fd_usb_mwifiex_8766, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$mwifiex_8766(fd fd_usb_mwifiex_8766, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the drivers/net/wireless/ath/ar5523.
+syz_usb_connect$ar5523(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_ar5523], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_ar5523
+syz_usb_control_io$ar5523(fd fd_usb_ar5523, descs ptr[in, vusb_descriptors], resps ptr[in, vusb_responses])
+syz_usb_ep_read$ar5523(fd fd_usb_ar5523, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$ar5523(fd fd_usb_ar5523, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the drivers/net/wireless/ath/ath9k.
+syz_usb_connect$ar9287(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_ar9287], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_ar9287
+syz_usb_control_io$ar9287(fd fd_usb_ar9287, descs ptr[in, vusb_descriptors_ar9287], resps ptr[in, vusb_responses_ar9287])
+syz_usb_ep_read$ar9287(fd fd_usb_ar9287, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$ar9287(fd fd_usb_ar9287, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the drivers/net/wireless/broadcom/brcm80211/brcmfmac.
+syz_usb_connect$brcm_43242(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_brcm_43242], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_brcm_43242
+syz_usb_control_io$brcm_43242(fd fd_usb_brcm_43242, descs ptr[in, vusb_descriptors_brcm_43242], resps ptr[in, vusb_responses_brcm_43242])
+syz_usb_ep_read$brcm_43242(fd fd_usb_brcm_43242, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$brcm_43242(fd fd_usb_brcm_43242, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the drivers/bluetooth/bfusb.c.
+syz_usb_connect$bfusb(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_bfusb], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_bfusb
+syz_usb_control_io$bfusb(fd fd_usb_bfusb, descs ptr[in, vusb_descriptors], resps ptr[in, vusb_responses])
+syz_usb_ep_read$bfusb(fd fd_usb_bfusb, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$bfusb(fd fd_usb_bfusb, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the drivers/bluetooth/btusb.c.
+syz_usb_connect$btusb(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_btusb], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_btusb
+syz_usb_control_io$btusb(fd fd_usb_btusb, descs ptr[in, vusb_descriptors_btusb], resps ptr[in, vusb_responses_btusb])
+syz_usb_ep_read$btusb(fd fd_usb_btusb, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$btusb(fd fd_usb_btusb, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the sound/usb/usx2y.
+syz_usb_connect$usx2y(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_usx2y], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_usx2y
+syz_usb_control_io$usx2y(fd fd_usb_usx2y, descs ptr[in, vusb_descriptors], resps ptr[in, vusb_responses])
+syz_usb_ep_read$usx2y(fd fd_usb_usx2y, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$usx2y(fd fd_usb_usx2y, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the drivers/media/usb/b2c2.
+syz_usb_connect$b2c2(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_b2c2], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_b2c2
+syz_usb_control_io$b2c2(fd fd_usb_b2c2, descs ptr[in, vusb_descriptors], resps ptr[in, vusb_responses])
+syz_usb_ep_read$b2c2(fd fd_usb_b2c2, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$b2c2(fd fd_usb_b2c2, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the drivers/media/radio/si470x.
+syz_usb_connect$si470x(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_si470x], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_si470x
+syz_usb_control_io$si470x(fd fd_usb_si470x, descs ptr[in, vusb_descriptors], resps ptr[in, vusb_responses])
+syz_usb_ep_read$si470x(fd fd_usb_si470x, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$si470x(fd fd_usb_si470x, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the drivers/nfc/nfcmrvl.
+syz_usb_connect$nfcmrvl(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_nfcmrvl], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_nfcmrvl
+syz_usb_control_io$nfcmrvl(fd fd_usb_nfcmrvl, descs ptr[in, vusb_descriptors], resps ptr[in, vusb_responses])
+syz_usb_ep_read$nfcmrvl(fd fd_usb_nfcmrvl, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$nfcmrvl(fd fd_usb_nfcmrvl, ep int16[0:31], len len[data], data ptr[in, ep_write_buffer_nfcmrvl])
+
+# These syzcalls specifically target the drivers/nfc/pn533.
+syz_usb_connect$pn533(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_pn533], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_pn533
+syz_usb_control_io$pn533(fd fd_usb_pn533, descs ptr[in, vusb_descriptors_pn533], resps ptr[in, vusb_responses_pn533])
+syz_usb_ep_read$pn533(fd fd_usb_pn533, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$pn533(fd fd_usb_pn533, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the drivers/input/joystick/iforce.
+syz_usb_connect$iforce(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_iforce], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_iforce
+syz_usb_control_io$iforce(fd fd_usb_iforce, descs ptr[in, vusb_descriptors], resps ptr[in, vusb_responses])
+syz_usb_ep_read$iforce(fd fd_usb_iforce, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$iforce(fd fd_usb_iforce, ep int16[0:31], len len[data], data buffer[in])
+
+# These syzcalls specifically target the drivers/media/usb/go7007.
+syz_usb_connect$go7007(speed const[USB_SPEED_FULL], dev_len len[dev], dev ptr[in, usb_device_descriptor_go7007], conn_descs ptr[in, vusb_connect_descriptors_simple]) fd_usb_go7007
+syz_usb_control_io$go7007(fd fd_usb_go7007, descs ptr[in, vusb_descriptors_go7007], resps ptr[in, vusb_responses_go7007])
+syz_usb_ep_read$go7007(fd fd_usb_go7007, ep int16[0:31], len len[data], data buffer[out])
+syz_usb_ep_write$go7007(fd fd_usb_go7007, ep int16[0:31], len len[data], data buffer[in])
+
+define USB_ENDPOINT1_IN_ADDRESS	(1 | USB_DIR_IN)
+#define USB_ENDPOINT1_OUT_ADDRESS	(1 | USB_DIR_OUT)
+define USB_ENDPOINT2_OUT_ADDRESS	(2 | USB_DIR_OUT)
+define USB_ENDPOINT3_IN_ADDRESS	(3 | USB_DIR_IN)
+#define USB_ENDPOINT3_OUT_ADDRESS	(3 | USB_DIR_OUT)
+define USB_ENDPOINT4_OUT_ADDRESS	(4 | USB_DIR_OUT)
+define USB_ENDPOINT5_IN_ADDRESS	(5 | USB_DIR_IN)
+define USB_ENDPOINT6_OUT_ADDRESS	(6 | USB_DIR_OUT)
+
+# SERIAL device class specific descriptions.
+
+# idVendor and idProduct are patched by Go code, see sys/linux/init_vusb.go.
+usb_device_descriptor_serial {
+	inner	usb_device_descriptor_t[0, 0, 0, 0, 0, 64, array[usb_config_descriptor_serial, 1]]
+} [packed]
+
+usb_config_descriptor_serial {
+	inner	usb_config_descriptor_ifaces_array_t[const[1, int8], flags[usb_config_attributes, int8], array[usb_interface_descriptor_serial, 1]]
+} [packed]
+
+usb_interface_descriptor_serial {
+	inner	usb_interface_descriptor_t[const[0, int8], int8, const[4, int8], const[USB_CLASS_VENDOR_SPEC, int8], const[0, int8], const[0, int8], void, usb_endpoint_descriptors_serial]
+} [packed]
+
+usb_endpoint_descriptors_serial {
+	in_bulk		usb_endpoint_descriptor_serial_bulkin
+	out_bulk	usb_endpoint_descriptor_serial_bulkout
+	in_int		usb_endpoint_descriptor_serial_intin
+	out_int		usb_endpoint_descriptor_serial_intout
+} [packed]
+
+usb_endpoint_descriptor_serial_bulkin {
+	inner	usb_endpoint_descriptor_t[const[USB_ENDPOINT1_IN_ADDRESS, int8], const[USB_ENDPOINT_XFER_BULK, int8], void]
+} [packed]
+
+usb_endpoint_descriptor_serial_bulkout {
+	inner	usb_endpoint_descriptor_t[const[USB_ENDPOINT2_OUT_ADDRESS, int8], const[USB_ENDPOINT_XFER_BULK, int8], void]
+} [packed]
+
+usb_endpoint_descriptor_serial_intin {
+	inner	usb_endpoint_descriptor_t[const[USB_ENDPOINT3_IN_ADDRESS, int8], const[USB_ENDPOINT_XFER_INT, int8], void]
+} [packed]
+
+usb_endpoint_descriptor_serial_intout {
+	inner	usb_endpoint_descriptor_t[const[USB_ENDPOINT4_OUT_ADDRESS, int8], const[USB_ENDPOINT_XFER_INT, int8], void]
+} [packed]
+
+# STORAGE device class specific descriptions.
+
+# idVendor and idProduct are patched by Go code, see sys/linux/init_vusb.go.
+usb_device_descriptor_storage {
+	inner	usb_device_descriptor_t[0, 0, 0, 0, 0, 64, array[usb_config_descriptor_storage, 1]]
+} [packed]
+
+usb_config_descriptor_storage {
+	inner	usb_config_descriptor_ifaces_array_t[const[1, int8], flags[usb_config_attributes, int8], array[usb_interface_descriptor_storage, 1]]
+} [packed]
+
+usb_interface_descriptor_storage {
+	inner	usb_interface_descriptor_t[const[0, int8], int8, const[4, int8], const[USB_CLASS_VENDOR_SPEC, int8], const[0, int8], const[0, int8], void, usb_endpoint_descriptors_storage]
+} [packed]
+
+usb_endpoint_descriptors_storage {
+	in_bulk		usb_endpoint_descriptor_storage_bulkin
+	out_bulk	usb_endpoint_descriptor_storage_bulkout
+	in_int		usb_endpoint_descriptor_storage_intin
+	out_int		usb_endpoint_descriptor_storage_intout
+} [packed]
+
+usb_endpoint_descriptor_storage_bulkin {
+	inner	usb_endpoint_descriptor_t[const[USB_ENDPOINT1_IN_ADDRESS, int8], const[USB_ENDPOINT_XFER_BULK, int8], void]
+} [packed]
+
+usb_endpoint_descriptor_storage_bulkout {
+	inner	usb_endpoint_descriptor_t[const[USB_ENDPOINT2_OUT_ADDRESS, int8], const[USB_ENDPOINT_XFER_BULK, int8], void]
+} [packed]
+
+usb_endpoint_descriptor_storage_intin {
+	inner	usb_endpoint_descriptor_t[const[USB_ENDPOINT3_IN_ADDRESS, int8], const[USB_ENDPOINT_XFER_INT, int8], void]
+} [packed]
+
+usb_endpoint_descriptor_storage_intout {
+	inner	usb_endpoint_descriptor_t[const[USB_ENDPOINT4_OUT_ADDRESS, int8], const[USB_ENDPOINT_XFER_INT, int8], void]
+} [packed]
+
+# SOUND device class specific descriptions.
+
+# idVendor and idProduct are patched by Go code, see sys/linux/init_vusb.go.
+usb_device_descriptor_sound {
+	inner	usb_device_descriptor_t[0, 0, 0, 0, 0, 64, array[usb_config_descriptor_sound, 1]]
+} [packed]
+
+usb_config_descriptor_sound {
+	inner	usb_config_descriptor_ifaces_array_t[const[1, int8], flags[usb_config_attributes, int8], array[usb_interface_descriptor_sound, 1]]
+} [packed]
+
+usb_interface_descriptor_sound {
+	inner	usb_interface_descriptor_t[const[0, int8], int8, const[4, int8], const[USB_CLASS_VENDOR_SPEC, int8], const[0, int8], const[0, int8], void, usb_endpoint_descriptors_sound]
+} [packed]
+
+usb_endpoint_descriptors_sound {
+	in_bulk		usb_endpoint_descriptor_sound_bulkin
+	out_bulk	usb_endpoint_descriptor_sound_bulkout
+	in_int		usb_endpoint_descriptor_sound_intin
+	out_int		usb_endpoint_descriptor_sound_intout
+} [packed]
+
+usb_endpoint_descriptor_sound_bulkin {
+	inner	usb_endpoint_descriptor_t[const[USB_ENDPOINT1_IN_ADDRESS, int8], const[USB_ENDPOINT_XFER_BULK, int8], void]
+} [packed]
+
+usb_endpoint_descriptor_sound_bulkout {
+	inner	usb_endpoint_descriptor_t[const[USB_ENDPOINT2_OUT_ADDRESS, int8], const[USB_ENDPOINT_XFER_BULK, int8], void]
+} [packed]
+
+usb_endpoint_descriptor_sound_intin {
+	inner	usb_endpoint_descriptor_t[const[USB_ENDPOINT3_IN_ADDRESS, int8], const[USB_ENDPOINT_XFER_INT, int8], void]
+} [packed]
+
+usb_endpoint_descriptor_sound_intout {
+	inner	usb_endpoint_descriptor_t[const[USB_ENDPOINT4_OUT_ADDRESS, int8], const[USB_ENDPOINT_XFER_INT, int8], void]
+} [packed]
+
+vusb_descriptors_rt2x00 {
+	len	len[parent, int32]
+	generic	ptr[in, vusb_descriptor_generic]
+} [packed]
+
+vusb_responses_rt2x00 {
+	len			len[parent, int32]
+	generic			ptr[in, vusb_response_generic]
+
+	USB_DEVICE_MODE		ptr[in, vusb_response_t[USB_TYPE_VENDOR, USB_DEVICE_MODE, void]]
+	USB_SINGLE_WRITE	ptr[in, vusb_response_t[USB_TYPE_VENDOR, USB_SINGLE_WRITE, void]]
+	USB_SINGLE_READ		ptr[in, vusb_response_t[USB_TYPE_VENDOR, USB_SINGLE_READ, void]]
+	USB_MULTI_WRITE		ptr[in, vusb_response_t[USB_TYPE_VENDOR, USB_MULTI_WRITE, void]]
+	USB_MULTI_READ		ptr[in, vusb_response_t[USB_TYPE_VENDOR, USB_MULTI_READ, rt2x00_reg]]
+	USB_EEPROM_WRITE	ptr[in, vusb_response_t[USB_TYPE_VENDOR, USB_EEPROM_WRITE, void]]
+	USB_EEPROM_READ		ptr[in, vusb_response_t[USB_TYPE_VENDOR, USB_EEPROM_READ, void]]
+	USB_RX_CONTROL		ptr[in, vusb_response_t[USB_TYPE_VENDOR, USB_RX_CONTROL, void]]
+} [packed]
+
+define USB_DEVICE_MODE	1
+define USB_SINGLE_WRITE	2
+define USB_SINGLE_READ	3
+define USB_MULTI_WRITE	6
+define USB_MULTI_READ	7
+define USB_EEPROM_WRITE	8
+define USB_EEPROM_READ	9
+#define USB_LED_CONTROL 10 # RT73USB
+define USB_RX_CONTROL	12
+
+rt2x00_reg {
+	val	flags[rt2x00_reg_vals, int32]
+} [packed]
+
+define RT2860	0x2860
+define RT2872	0x2872
+define RT2883	0x2883
+
+rt2x00_reg_vals = 0, 1, RT2860
+
+vusb_descriptors_rtl8192cu {
+	len	len[parent, int32]
+	generic	ptr[in, vusb_descriptor_generic]
+} [packed]
+
+vusb_responses_rtl8192cu {
+	len				len[parent, int32]
+	generic				ptr[in, vusb_response_generic]
+
+	REALTEK_USB_VENQT_CMD_REQ	ptr[in, vusb_response_t[USB_TYPE_VENDOR, REALTEK_USB_VENQT_CMD_REQ, rtl8192cu_usb_read]]
+} [packed]
+
+rtl8192cu_usb_read [
+	read8	flags[rtl8192cu_byte_vals, int8]
+	read16	flags[rtl8192cu_word_vals, int16]
+	read32	flags[rtl8192cu_dword_vals, int32]
+] [varlen]
+
+define PFM_ALDN	1
+define BOOT_FROM_EEPROM	4
+define BIT_1	1 << 1
+define BIT_3	1 << 3
+define BIT_5	1 << 5
+define BIT_6	1 << 6
+define BIT_7	1 << 7
+define BIT_8	1 << 8
+define phy_lc	0x70
+define USB_TEST_EP_SHIFT	4
+define ep_cfg_1	0x1 << USB_TEST_EP_SHIFT
+define ep_cfg_2	0x2 << USB_TEST_EP_SHIFT
+define ep_cfg_3	0x3 << USB_TEST_EP_SHIFT
+
+rtl8192cu_byte_vals = 0, PFM_ALDN, BOOT_FROM_EEPROM, BIT_1, BIT_3, BIT_5, BIT_6, BIT_7, phy_lc, ep_cfg_1, ep_cfg_2, ep_cfg_3
+
+define BIT_10	1 << 10
+define APFM_ONMAC	BIT_8
+
+rtl8192cu_word_vals = 0, APFM_ONMAC
+
+define TRP_VAUX_EN	23
+define TYPE_ID	27
+define VENDOR_ID	19
+define TYPE_VENDOR_ID	TYPE_ID | VENDOR_ID
+define VERSION_NORMAL_TSMC_CHIP_92C_1T2R	19
+define CHIP_BONDING_IDENTIFIER	1 << 22
+define val_rcr	0x00070000
+define LLT_OP_VAL2	0x1 << 30
+define LLT_OP_VAL1	0x2 << 30
+
+rtl8192cu_dword_vals = 0, VERSION_NORMAL_TSMC_CHIP_92C_1T2R, TRP_VAUX_EN, TYPE_ID, VENDOR_ID, TYPE_VENDOR_ID, CHIP_BONDING_IDENTIFIER, val_rcr, LLT_OP_VAL1, LLT_OP_VAL2
+
+define REALTEK_USB_VENQT_CMD_REQ	0x05
+
+vusb_descriptors_ar9287 {
+	len	len[parent, int32]
+	generic	ptr[in, vusb_descriptor_generic]
+} [packed]
+
+vusb_responses_ar9287 {
+	len				len[parent, int32]
+	generic				ptr[in, vusb_response_generic]
+
+	AR9287_FIRMWARE_DOWNLOAD	ptr[in, vusb_response_t[USB_TYPE_VENDOR, AR9287_FIRMWARE_DOWNLOAD, void]]
+	AR9287_FIRMWARE_DOWNLOAD_COMP	ptr[in, vusb_response_t[USB_TYPE_VENDOR, AR9287_FIRMWARE_DOWNLOAD_COMP, void]]
+} [packed]
+
+define AR9287_FIRMWARE_DOWNLOAD	0x30
+define AR9287_FIRMWARE_DOWNLOAD_COMP	0x31
+
+vusb_descriptors_brcm_43242 {
+	len	len[parent, int32]
+	generic	ptr[in, vusb_descriptor_generic]
+} [packed]
+
+vusb_responses_brcm_43242 {
+	len			len[parent, int32]
+	generic			ptr[in, vusb_response_generic]
+
+	BRCM_CTL_WRITE		ptr[in, vusb_response_t[USB_TYPE_CLASS, 0, brcmf_proto_bcdc_dcmd]]
+	BRCM_CTL_READ		ptr[in, vusb_response_t[USB_TYPE_CLASS, 1, brcmf_proto_bcdc_dcmd]]
+
+	BRCM_43242_DL_GETVER	ptr[in, vusb_response_t[USB_TYPE_VENDOR, BRCM_43242_DL_GETVER, bootrom_id_le]]
+
+	BRCM_43242_DL_START	ptr[in, vusb_response_t[USB_TYPE_VENDOR, BRCM_43242_DL_START, rdl_state_le_start]]
+
+	BRCM_43242_DL_GETSTATE	ptr[in, vusb_response_t[USB_TYPE_VENDOR, BRCM_43242_DL_GETSTATE, rdl_state_le_getstate]]
+
+	BRCM_43242_DL_GO	ptr[in, vusb_response_t[USB_TYPE_VENDOR, BRCM_43242_DL_GO, void]]
+
+	BRCM_43242_DL_RESETCFG	ptr[in, vusb_response_t[USB_TYPE_VENDOR, BRCM_43242_DL_RESETCFG, bootrom_id_le]]
+} [packed]
+
+brcmf_proto_bcdc_dcmd {
+# dongle command value
+	cmd		const[0, int32]
+# lower 16: output buflen
+	len_low		len[parent, int16]
+# upper 16: input buflen (excludes header)
+	len_high	len[parent, int16]
+# flag defns given below
+	flags		flags[BCDC_DCMD_FLAGS, int32]
+# status code returned from the device
+	status		const[0, int32]
+	buf		array[int8, 0:512]
+} [packed]
+
+define BCDC_DCMD_ERROR	0x01
+BCDC_DCMD_FLAGS = 0, BCDC_DCMD_ERROR
+
+bootrom_id_le {
+	chip		flags[BRCM_43242_CHIP_IDS, int32]
+	chiprev		int32[1:1]
+	ramsize		int32[1:1]
+	remapbase	int32[1:1]
+	boardtype	int32[1:1]
+	boardrev	int32[1:1]
+} [packed]
+
+type rdl_state_le_t[STATE] {
+	state	STATE
+	bytes	int32[4096:4096]
+} [packed]
+
+rdl_state_le_start {
+	inner	rdl_state_le_t[const[BRCM_43242_DL_WAITING, int32]]
+} [packed]
+
+rdl_state_le_getstate {
+	inner	rdl_state_le_t[flags[BRCM_43242_DL_STATES, int32]]
+} [packed]
+
+define BRCM_CC_43143_CHIP_ID	43143
+define BRCM_CC_43235_CHIP_ID	43235
+define BRCM_CC_43242_CHIP_ID	43242
+define BRCM_CC_43566_CHIP_ID	43566
+define CY_CC_4373_CHIP_ID	0x4373
+define BRCMF_POSTBOOT_ID	0xa123
+BRCM_43242_CHIP_IDS = BRCM_CC_43143_CHIP_ID, BRCM_CC_43235_CHIP_ID, BRCM_CC_43242_CHIP_ID, BRCM_CC_43566_CHIP_ID, CY_CC_4373_CHIP_ID, BRCMF_POSTBOOT_ID
+
+define BRCM_43242_DL_WAITING	0
+define BRCM_43242_DL_READY	1
+define BRCM_43242_DL_BAD_HDR	2
+define BRCM_43242_DL_BAD_CRC	3
+define BRCM_43242_DL_RUNNABLE	4
+BRCM_43242_DL_STATES = BRCM_43242_DL_WAITING, BRCM_43242_DL_READY, BRCM_43242_DL_BAD_HDR, BRCM_43242_DL_BAD_CRC, BRCM_43242_DL_RUNNABLE
+
+define BRCM_43242_DL_GETSTATE	0
+define BRCM_43242_DL_GO	2
+define BRCM_43242_DL_START	3
+define BRCM_43242_DL_GETVER	5
+define BRCM_43242_DL_RESETCFG	8
+
+vusb_descriptors_btusb {
+	len	len[parent, int32]
+	generic	ptr[in, vusb_descriptor_generic]
+} [packed]
+
+vusb_responses_btusb {
+	len		len[parent, int32]
+	generic		ptr[in, vusb_response_generic]
+
+	BTUSB_CMD_REQ	ptr[in, vusb_response_t[USB_TYPE_CLASS, 0, void]]
+} [packed]
+
+ep_write_buffer_nfcmrvl [
+	frame	nfcmrvl_frame
+] [varlen]
+
+define NFCMRVL_HCI_EVENT_CODE	0x4
+define NFCMRVL_HCI_NFC_EVENT_CODE	0xFF
+
+nfcmrvl_frame {
+	hci_event	const[NFCMRVL_HCI_EVENT_CODE, int8]
+	hci_nfc_event	const[NFCMRVL_HCI_NFC_EVENT_CODE, int8]
+	reserved	const[0, int16]
+	packet		nci_packet
+} [packed]
+
+nci_packet [
+	NCI_OP_CORE_RESET_RSP		nci_packet_t[NCI_MT_RSP_PKT, NCI_GID_CORE, 0x0, void]
+	NCI_OP_CORE_INIT_RSP		nci_packet_t[NCI_MT_RSP_PKT, NCI_GID_CORE, 0x1, void]
+	NCI_OP_CORE_SET_CONFIG_RSP	nci_packet_t[NCI_MT_RSP_PKT, NCI_GID_CORE, 0x2, void]
+	NCI_OP_CORE_CONN_CREATE_RSP	nci_packet_t[NCI_MT_RSP_PKT, NCI_GID_CORE, 0x4, void]
+	NCI_OP_CORE_CONN_CLOSE_RSP	nci_packet_t[NCI_MT_RSP_PKT, NCI_GID_CORE, 0x5, void]
+	NCI_OP_RF_DISCOVER_MAP_RSP	nci_packet_t[NCI_MT_RSP_PKT, NCI_GID_RF_MGMT, 0x0, void]
+	NCI_OP_RF_DISCOVER_RSP		nci_packet_t[NCI_MT_RSP_PKT, NCI_GID_RF_MGMT, 0x3, void]
+	NCI_OP_RF_DISCOVER_SELECT_RSP	nci_packet_t[NCI_MT_RSP_PKT, NCI_GID_RF_MGMT, 0x4, void]
+	NCI_OP_RF_DEACTIVATE_RSP	nci_packet_t[NCI_MT_RSP_PKT, NCI_GID_RF_MGMT, 0x6, void]
+	NCI_OP_NFCEE_MODE_SET_RSP	nci_packet_t[NCI_MT_RSP_PKT, NCI_GID_NFCEE_MGMT, 0x1, void]
+	NCI_OP_CORE_GET_CONFIG_RSP	nci_packet_t[NCI_MT_RSP_PKT, NCI_GID_CORE, 0x3, void]
+
+	NCI_OP_CORE_CONN_CREDITS_NTF	nci_packet_t[NCI_MT_NTF_PKT, NCI_GID_CORE, 0x6, nci_ntf_payload]
+	NCI_OP_CORE_GENERIC_ERROR_NTF	nci_packet_t[NCI_MT_NTF_PKT, NCI_GID_CORE, 0x7, nci_ntf_payload]
+	NCI_OP_RF_DISCOVER_NTF		nci_packet_t[NCI_MT_NTF_PKT, NCI_GID_RF_MGMT, 0x3, nci_ntf_payload]
+	NCI_OP_RF_INTF_ACTIVATED_NTF	nci_packet_t[NCI_MT_NTF_PKT, NCI_GID_RF_MGMT, 0x5, nci_ntf_payload]
+	NCI_OP_RF_DEACTIVATE_NTF	nci_packet_t[NCI_MT_NTF_PKT, NCI_GID_RF_MGMT, 0x6, nci_ntf_payload]
+	NCI_OP_RF_NFCEE_ACTION_NTF	nci_packet_t[NCI_MT_NTF_PKT, NCI_GID_RF_MGMT, 0x9, nci_ntf_payload]
+	NCI_OP_NFCEE_DISCOVER_NTF	nci_packet_t[NCI_MT_NTF_PKT, NCI_GID_NFCEE_MGMT, 0x9, nci_ntf_payload]
+	NCI_OP_CORE_RESET_NTF		nci_packet_t[NCI_MT_NTF_PKT, NCI_GID_CORE, 0x0, nci_ntf_payload]
+
+	rx_data				nci_packet_t[NCI_MT_DATA_PKT, 0, 0, nci_rx_packet]
+] [varlen]
+
+type nci_packet_t[TYPE, GID, OID, PAYLOAD] {
+	type	const[TYPE, int8:3]
+	gid	const[GID, int8:5]
+	oid	const[OID, int8]
+	payload	PAYLOAD
+} [packed]
+
+nci_ntf_payload {
+	todo	void
+} [packed]
+
+nci_rx_packet {
+	payload	array[int8, 0:4]
+} [packed]
+
+vusb_descriptors_pn533 {
+	len	len[parent, int32]
+	generic	ptr[in, vusb_descriptor_generic]
+} [packed]
+
+vusb_responses_pn533 {
+	len	len[parent, int32]
+	generic	ptr[in, vusb_response_generic]
+} [packed]
+
+vusb_descriptors_go7007 {
+	len	len[parent, int32]
+	generic	ptr[in, vusb_descriptor_generic]
+} [packed]
+
+vusb_responses_go7007 {
+	len		len[parent, int32]
+	generic		ptr[in, vusb_response_generic]
+
+	GO7007_INT1	ptr[in, vusb_response_t[USB_TYPE_VENDOR, GO7007_INT1, go_status_reg]]
+	GO7007_INT2	ptr[in, vusb_response_t[USB_TYPE_VENDOR, GO7007_INT2, void]]
+	GO7007_INT3	ptr[in, vusb_response_t[USB_TYPE_VENDOR, GO7007_INT3, go_usb_buf]]
+	GO7007_RESET	ptr[in, vusb_response_t[USB_TYPE_VENDOR, GO7007_RESET, void]]
+	GO7007_WRITE	ptr[in, vusb_response_t[USB_TYPE_VENDOR, GO7007_WRITE, void]]
+	GO7007_READ	ptr[in, vusb_response_t[USB_TYPE_VENDOR, GO7007_READ, go_usb_buf]]
+} [packed]
+
+define GO7007_INT1	0x14
+define GO7007_INT2	0x12
+define GO7007_INT3	0x0
+define GO7007_RESET	0x10
+define GO7007_WRITE	0x24
+define GO7007_READ	0x25
+
+define status_0x10	0x10
+
+go_status_reg_vals = 0, status_0x10
+
+go_status_reg {
+	inner	flags[go_status_reg_vals, int16]
+} [packed]
+
+go_usb_buf {
+	usb_buf0	const[0, int8]
+	usb_buf1	const[0, int8]
+	usb_buf2	const[0, int8]
+	usb_buf3	const[0, int8]
+	usb_buf4	const[0, int8]
+	usb_buf5	const[0, int8]
+	usb_buf6	const[0, int8]
+	usb_buf7	const[0, int8]
+} [packed]
+
+vusb_connect_descriptors_simple {
+	qual_len	len[qual, int32]
+	qual		ptr[in, usb_qualifier_descriptor_simple]
+	bos_len		len[bos, int32]
+	bos		ptr[in, usb_bos_descriptor_simple]
+	strs_len	const[1, int32]
+	strs		vusb_connect_string_descriptor_simple
+} [packed]
+
+vusb_connect_string_descriptor_simple {
+	len	len[str, int32]
+	str	ptr[in, usb_string_descriptor_simple]
+} [packed]
+
+usb_string_descriptor_simple [
+	lang_id	usb_string_descriptor_t[const[0x409, int16]]
+	string	usb_string_descriptor_t[usb_string_data_simple]
+] [varlen]
+
+usb_string_data_simple {
+# This is a UTF16 encoded string 'simple'.
+	data	stringnoz["73696d706c65"]
+} [packed]
+
+usb_qualifier_descriptor_simple {
+	bLength			len[parent, int8]
+	bDescriptorType		const[USB_DT_DEVICE_QUALIFIER, int8]
+
+	bcdUSB			const[0x200, int16]
+	bDeviceClass		int8[0:0]
+	bDeviceSubClass		int8[0:0]
+	bDeviceProtocol		int8[0:0]
+	bMaxPacketSize0		const[64, int8]
+	bNumConfigurations	int8[0:0]
+	bRESERVED		const[0, int8]
+} [packed]
+
+# TODO: investigate which devices are required to have this descriptor.
+usb_bos_descriptor_simple {
+	bLength		const[USB_DT_BOS_SIZE, int8]
+	bDescriptorType	const[USB_DT_BOS, int8]
+
+	wTotalLength	len[parent, int16]
+	bNumDeviceCaps	int8[0:0]
+	caps		void
+#bNumDeviceCaps	len[caps, int8]
+#caps		array[usb_dev_cap, 0:6]
+} [packed]
+
+type usb_device_descriptor_simple_t[CLASS, SUBCLASS, PROTOCOL, VENDOR, PRODUCT, DEVICE, CFSNUM, CFS] {
+	bLength			const[USB_DT_DEVICE_SIZE, int8]
+	bDescriptorType		const[USB_DT_DEVICE, int8]
+
+	bcdUSB			const[0x200, int16]
+	bDeviceClass		const[CLASS, int8]
+	bDeviceSubClass		const[SUBCLASS, int8]
+	bDeviceProtocol		const[PROTOCOL, int8]
+	bMaxPacketSize0		const[64, int8]
+	idVendor		const[VENDOR, int16]
+	idProduct		const[PRODUCT, int16]
+	bcdDevice		const[DEVICE, int16]
+	iManufacturer		const[1, int8]
+	iProduct		const[1, int8]
+	iSerialNumber		const[1, int8]
+	bNumConfigurations	CFSNUM
+
+	configs			CFS
+} [packed]
+
+type usb_config_descriptor_simple_t[NUM, IFSNUM, ATTRS, IFS] {
+	bLength			const[USB_DT_CONFIG_SIZE, int8]
+	bDescriptorType		const[USB_DT_CONFIG, int8]
+
+	wTotalLength		len[parent, int16]
+	bNumInterfaces		IFSNUM
+	bConfigurationValue	NUM
+	iConfiguration		const[0, int8]
+	bmAttributes		ATTRS
+	bMaxPower		const[1, int8]
+
+	interfaces		IFS
+} [packed]
+
+type usb_interface_descriptor_simple_t[IFNUM, ALTNUM, EPSNUM, CLASS, SUBCLASS, PROTOCOL, EXTRA, EPS] {
+	bLength			const[USB_DT_INTERFACE_SIZE, int8]
+	bDescriptorType		const[USB_DT_INTERFACE, int8]
+
+	bInterfaceNumber	IFNUM
+	bAlternateSetting	ALTNUM
+	bNumEndpoints		EPSNUM
+	bInterfaceClass		CLASS
+	bInterfaceSubClass	SUBCLASS
+	bInterfaceProtocol	PROTOCOL
+	iInterface		const[0, int8]
+
+	extra			EXTRA
+	endpoints		EPS
+} [packed]
+
+# TODO: Some endpoints have USB_DT_ENDPOINT_SIZE.
+type usb_endpoint_descriptor_simple_t[ADDR, ATTRS] {
+	bLength			const[USB_DT_ENDPOINT_AUDIO_SIZE, int8]
+	bDescriptorType		const[USB_DT_ENDPOINT, int8]
+
+	bEndpointAddress	ADDR
+	bmAttributes		ATTRS
+	wMaxPacketSize		const[64, int16]
+	bInterval		const[1, int8]
+
+	bRefresh		const[1, int8]
+	bSynchAddress		const[1, int8]
+
+	extra			void
+} [packed]
+
+usb_device_descriptor_rsi_9113 {
+	inner	usb_device_descriptor_simple_t[0, 0, 0, 0x1618, 0x9113, 64, const[1, int8], usb_config_descriptor_rsi]
+} [packed]
+
+usb_device_descriptor_rsi_9116 {
+	inner	usb_device_descriptor_simple_t[0, 0, 0, 0x1618, 0x9116, 64, const[1, int8], usb_config_descriptor_rsi]
+} [packed]
+
+usb_config_descriptor_rsi {
+	inner	usb_config_descriptor_simple_t[const[1, int8], const[1, int8], const[USB_CONFIG_ATT_SELFPOWER, int8], usb_interface_descriptor_rsi]
+} [packed]
+
+usb_interface_descriptor_rsi {
+	inner	usb_interface_descriptor_simple_t[const[0, int8], const[0, int8], len[endpoints, int8], const[0, int8], const[0, int8], const[0, int8], void, array[usb_endpoint_descriptor_rsi, 4]]
+} [packed]
+
+usb_endpoint_descriptor_rsi {
+	inner	usb_endpoint_descriptor_simple_t[const[USB_ENDPOINT1_IN_ADDRESS, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+} [packed]
+
+usb_device_descriptor_rt2x00 {
+	inner	usb_device_descriptor_simple_t[0, 0, 0, 0x7b8, 0x2870, 64, const[1, int8], usb_config_descriptor_rt2x00]
+} [packed]
+
+usb_config_descriptor_rt2x00 {
+	inner	usb_config_descriptor_simple_t[const[1, int8], const[1, int8], const[USB_CONFIG_ATT_SELFPOWER, int8], usb_interface_descriptor_rt2x00]
+} [packed]
+
+usb_interface_descriptor_rt2x00 {
+	inner	usb_interface_descriptor_simple_t[const[0, int8], const[0, int8], const[4, int8], const[USB_CLASS_VENDOR_SPEC, int8], const[2, int8], const[0xff, int8], void, usb_endpoint_descriptors_rt2x00]
+} [packed]
+
+usb_endpoint_descriptors_rt2x00 {
+	cmd_in		usb_endpoint_descriptor_simple_t[const[0x81, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	cmd_out		usb_endpoint_descriptor_simple_t[const[0x1, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	data_out	usb_endpoint_descriptor_simple_t[const[0x2, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	data_in		usb_endpoint_descriptor_simple_t[const[0x82, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+} [packed]
+
+usb_device_descriptor_rtl8192cu {
+	inner	usb_device_descriptor_simple_t[0, 0, 0, 0xbda, 0x8178, 64, const[1, int8], usb_config_descriptor_rtl8192cu]
+} [packed]
+
+usb_config_descriptor_rtl8192cu {
+	inner	usb_config_descriptor_simple_t[const[1, int8], const[1, int8], const[USB_CONFIG_ATT_SELFPOWER, int8], usb_interface_descriptor_rtl8192cu]
+} [packed]
+
+usb_interface_descriptor_rtl8192cu {
+	inner	usb_interface_descriptor_simple_t[const[0, int8], const[0, int8], const[4, int8], const[USB_CLASS_VENDOR_SPEC, int8], const[2, int8], const[0xff, int8], void, usb_endpoint_descriptors_rtl8192cu]
+} [packed]
+
+usb_endpoint_descriptors_rtl8192cu {
+	cmd_in		usb_endpoint_descriptor_simple_t[const[0x81, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	cmd_out		usb_endpoint_descriptor_simple_t[const[0x1, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	data_out	usb_endpoint_descriptor_simple_t[const[0x2, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	data_in		usb_endpoint_descriptor_simple_t[const[0x82, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+} [packed]
+
+usb_device_descriptor_mt76 {
+	inner	usb_device_descriptor_simple_t[0, 0, 0, 0x148f, 0x7610, 64, const[1, int8], usb_config_descriptor_mt76]
+} [packed]
+
+usb_config_descriptor_mt76 {
+	inner	usb_config_descriptor_simple_t[const[1, int8], const[1, int8], const[USB_CONFIG_ATT_SELFPOWER, int8], usb_interface_descriptor_mt76]
+} [packed]
+
+usb_interface_descriptor_mt76 {
+	inner	usb_interface_descriptor_simple_t[const[0, int8], const[0, int8], const[4, int8], const[USB_CLASS_VENDOR_SPEC, int8], const[2, int8], const[0xff, int8], void, usb_endpoint_descriptors_mt76]
+} [packed]
+
+usb_endpoint_descriptors_mt76 {
+	cmd_in		usb_endpoint_descriptor_simple_t[const[0x81, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	cmd_out		usb_endpoint_descriptor_simple_t[const[0x1, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	data_out	usb_endpoint_descriptor_simple_t[const[0x2, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	data_in		usb_endpoint_descriptor_simple_t[const[0x82, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+} [packed]
+
+usb_device_descriptor_mwifiex_8766 {
+	inner	usb_device_descriptor_simple_t[0, 0, 0, 0x1286, 0x2041, 64, const[1, int8], usb_config_descriptor_mwifiex_8766]
+} [packed]
+
+usb_config_descriptor_mwifiex_8766 {
+	inner	usb_config_descriptor_simple_t[const[1, int8], const[1, int8], const[USB_CONFIG_ATT_SELFPOWER, int8], usb_interface_descriptor_mwifiex_8766]
+} [packed]
+
+usb_interface_descriptor_mwifiex_8766 {
+	inner	usb_interface_descriptor_simple_t[const[0, int8], const[0, int8], const[4, int8], const[USB_CLASS_VENDOR_SPEC, int8], const[2, int8], const[0xff, int8], void, usb_endpoint_descriptors_mwifiex_8766]
+} [packed]
+
+usb_endpoint_descriptors_mwifiex_8766 {
+	cmd_in		usb_endpoint_descriptor_simple_t[const[0x81, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	cmd_out		usb_endpoint_descriptor_simple_t[const[0x1, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	data_out	usb_endpoint_descriptor_simple_t[const[0x2, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	data_in		usb_endpoint_descriptor_simple_t[const[0x82, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+} [packed]
+
+usb_device_descriptor_ar5523 {
+	inner	usb_device_descriptor_simple_t[0, 0, 0, 0x168c, 0x1, 64, const[1, int8], usb_config_descriptor_ar5523]
+} [packed]
+
+usb_config_descriptor_ar5523 {
+	inner	usb_config_descriptor_simple_t[const[1, int8], const[1, int8], const[USB_CONFIG_ATT_SELFPOWER, int8], usb_interface_descriptor_ar5523]
+} [packed]
+
+usb_interface_descriptor_ar5523 {
+	inner	usb_interface_descriptor_simple_t[const[0, int8], const[0, int8], const[2, int8], const[USB_CLASS_VENDOR_SPEC, int8], const[2, int8], int8[0xff:0xff], void, usb_endpoint_descriptors_ar5523]
+} [packed]
+
+usb_endpoint_descriptors_ar5523 {
+	in	usb_endpoint_descriptor_simple_t[const[USB_ENDPOINT1_IN_ADDRESS, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	out	usb_endpoint_descriptor_simple_t[const[USB_ENDPOINT2_OUT_ADDRESS, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+} [packed]
+
+usb_device_descriptor_ar9287 {
+	inner	usb_device_descriptor_simple_t[0, 0, 0, 0xcf3, 0x7015, 64, const[1, int8], usb_config_descriptor_ar9287]
+} [packed]
+
+usb_config_descriptor_ar9287 {
+	inner	usb_config_descriptor_simple_t[const[1, int8], const[1, int8], const[USB_CONFIG_ATT_SELFPOWER, int8], usb_interface_descriptor_ar9287]
+} [packed]
+
+usb_interface_descriptor_ar9287 {
+	inner	usb_interface_descriptor_simple_t[const[0, int8], const[0, int8], const[2, int8], const[USB_CLASS_VENDOR_SPEC, int8], const[2, int8], int8[0xff:0xff], void, usb_endpoint_descriptors_ar9287]
+} [packed]
+
+usb_endpoint_descriptors_ar9287 {
+	in	usb_endpoint_descriptor_simple_t[const[USB_ENDPOINT1_IN_ADDRESS, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	out	usb_endpoint_descriptor_simple_t[const[USB_ENDPOINT2_OUT_ADDRESS, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+} [packed]
+
+usb_device_descriptor_brcm_43242 {
+	inner	usb_device_descriptor_simple_t[USB_CLASS_WIRELESS_CONTROLLER, 0, 0, 0xa5c, 0xbd1f, 64, const[1, int8], usb_config_descriptor_brcm_43242]
+} [packed]
+
+usb_config_descriptor_brcm_43242 {
+	inner	usb_config_descriptor_simple_t[const[1, int8], const[1, int8], const[USB_CONFIG_ATT_SELFPOWER, int8], usb_interface_descriptor_brcm_43242]
+} [packed]
+
+usb_interface_descriptor_brcm_43242 {
+	inner	usb_interface_descriptor_simple_t[const[0, int8], const[0, int8], const[2, int8], const[USB_CLASS_VENDOR_SPEC, int8], const[2, int8], int8[0xff:0xff], void, usb_endpoint_descriptors_brcm_43242]
+} [packed]
+
+usb_endpoint_descriptors_brcm_43242 {
+	in	usb_endpoint_descriptor_simple_t[const[0x81, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	out	usb_endpoint_descriptor_simple_t[const[0x2, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+} [packed]
+
+usb_device_descriptor_bfusb {
+	inner	usb_device_descriptor_simple_t[0, 0, 0, 0x57c, 0x2200, 64, const[1, int8], usb_config_descriptor_bfusb]
+} [packed]
+
+usb_config_descriptor_bfusb {
+	inner	usb_config_descriptor_simple_t[const[1, int8], const[1, int8], const[USB_CONFIG_ATT_SELFPOWER, int8], usb_interface_descriptor_bfusb]
+} [packed]
+
+usb_interface_descriptor_bfusb {
+	inner	usb_interface_descriptor_simple_t[const[0, int8], const[0, int8], const[2, int8], const[USB_CLASS_VENDOR_SPEC, int8], const[4, int8], const[1, int8], void, usb_endpoint_descriptors_bfusb]
+} [packed]
+
+usb_endpoint_descriptors_bfusb {
+	in	usb_endpoint_descriptor_simple_t[const[0x81, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	out	usb_endpoint_descriptor_simple_t[const[0x2, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+} [packed]
+
+usb_device_descriptor_btusb {
+	inner	usb_device_descriptor_simple_t[0, 0, 0, 0xe8d, 0x763f, 64, const[1, int8], usb_config_descriptor_btusb]
+} [packed]
+
+usb_config_descriptor_btusb {
+	inner	usb_config_descriptor_simple_t[const[1, int8], const[1, int8], const[USB_CONFIG_ATT_SELFPOWER, int8], usb_interface_descriptor_btusb]
+} [packed]
+
+usb_interface_descriptor_btusb {
+	inner	usb_interface_descriptor_simple_t[const[0, int8], const[0, int8], const[3, int8], const[USB_CLASS_VENDOR_SPEC, int8], const[4, int8], const[1, int8], void, usb_endpoint_descriptors_btusb]
+} [packed]
+
+usb_endpoint_descriptors_btusb {
+	in	usb_endpoint_descriptor_simple_t[const[USB_ENDPOINT1_IN_ADDRESS, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	out	usb_endpoint_descriptor_simple_t[const[USB_ENDPOINT2_OUT_ADDRESS, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	intr	usb_endpoint_descriptor_simple_t[const[USB_ENDPOINT3_IN_ADDRESS, int8], const[USB_ENDPOINT_XFER_INT, int8]]
+} [packed]
+
+usb_device_descriptor_usx2y {
+	inner	usb_device_descriptor_simple_t[0, 0, 0, 0x1604, 0x8001, 64, const[1, int8], usb_config_descriptor_simple]
+} [packed]
+
+usb_device_descriptor_b2c2 {
+	inner	usb_device_descriptor_simple_t[0, 0, 0, 0xaf7, 0x101, 64, const[1, int8], usb_config_descriptor_simple]
+} [packed]
+
+usb_device_descriptor_si470x {
+	inner	usb_device_descriptor_simple_t[USB_CLASS_HID, 0, 0, 0x10c4, 0x818a, 64, const[1, int8], usb_config_descriptor_si470x]
+} [packed]
+
+usb_config_descriptor_si470x {
+	inner	usb_config_descriptor_simple_t[const[1, int8], const[1, int8], const[USB_CONFIG_ATT_SELFPOWER, int8], usb_interface_descriptor_si470x]
+} [packed]
+
+usb_interface_descriptor_si470x {
+	inner	usb_interface_descriptor_simple_t[const[0, int8], const[0, int8], const[3, int8], const[USB_CLASS_VENDOR_SPEC, int8], const[4, int8], const[1, int8], void, usb_endpoint_descriptors_si470x]
+} [packed]
+
+usb_endpoint_descriptors_si470x {
+	in	usb_endpoint_descriptor_simple_t[const[USB_ENDPOINT1_IN_ADDRESS, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	out	usb_endpoint_descriptor_simple_t[const[USB_ENDPOINT2_OUT_ADDRESS, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	intr	usb_endpoint_descriptor_simple_t[const[USB_ENDPOINT3_IN_ADDRESS, int8], const[USB_ENDPOINT_XFER_INT, int8]]
+} [packed]
+
+usb_device_descriptor_nfcmrvl {
+	inner	usb_device_descriptor_simple_t[0, 0, 0, 0x1286, 0x2046, 64, const[1, int8], usb_config_descriptor_nfcmrvl]
+} [packed]
+
+usb_config_descriptor_nfcmrvl {
+	inner	usb_config_descriptor_simple_t[const[1, int8], const[1, int8], const[USB_CONFIG_ATT_SELFPOWER, int8], usb_interface_descriptor_nfcmrvl]
+} [packed]
+
+usb_interface_descriptor_nfcmrvl {
+	inner	usb_interface_descriptor_simple_t[const[0, int8], const[0, int8], const[2, int8], const[USB_CLASS_VENDOR_SPEC, int8], const[4, int8], const[1, int8], void, usb_endpoint_descriptors_nfcmrvl]
+} [packed]
+
+usb_endpoint_descriptors_nfcmrvl {
+	in	usb_endpoint_descriptor_simple_t[const[0x81, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	out	usb_endpoint_descriptor_simple_t[const[0x2, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+} [packed]
+
+usb_device_descriptor_pn533 {
+	inner	usb_device_descriptor_simple_t[0, 0, 0, 0x4cc, 0x2533, 64, const[1, int8], usb_config_descriptor_pn533]
+} [packed]
+
+usb_config_descriptor_pn533 {
+	inner	usb_config_descriptor_simple_t[const[1, int8], const[1, int8], const[USB_CONFIG_ATT_SELFPOWER, int8], usb_interface_descriptor_pn533]
+} [packed]
+
+usb_interface_descriptor_pn533 {
+	inner	usb_interface_descriptor_simple_t[const[0, int8], const[0, int8], const[2, int8], const[USB_CLASS_VENDOR_SPEC, int8], const[0, int8], const[0, int8], void, usb_endpoint_descriptors_pn533]
+} [packed]
+
+usb_endpoint_descriptors_pn533 {
+	in	usb_endpoint_descriptor_simple_t[const[USB_ENDPOINT1_IN_ADDRESS, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	out	usb_endpoint_descriptor_simple_t[const[USB_ENDPOINT2_OUT_ADDRESS, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+} [packed]
+
+usb_device_descriptor_iforce {
+	inner	usb_device_descriptor_simple_t[0, 0, 0, 0x44f, 0xa01c, 64, const[1, int8], usb_config_descriptor_iforce]
+} [packed]
+
+usb_config_descriptor_iforce {
+	inner	usb_config_descriptor_simple_t[const[1, int8], const[1, int8], const[USB_CONFIG_ATT_SELFPOWER, int8], usb_interface_descriptor_iforce]
+} [packed]
+
+usb_interface_descriptor_iforce {
+	inner	usb_interface_descriptor_simple_t[const[0, int8], const[0, int8], const[2, int8], const[USB_CLASS_VENDOR_SPEC, int8], const[0, int8], const[0, int8], void, usb_endpoint_descriptors_iforce]
+} [packed]
+
+usb_endpoint_descriptors_iforce {
+	in	usb_endpoint_descriptor_simple_t[const[USB_ENDPOINT1_IN_ADDRESS, int8], const[USB_ENDPOINT_XFER_INT, int8]]
+	out	usb_endpoint_descriptor_simple_t[const[USB_ENDPOINT2_OUT_ADDRESS, int8], const[USB_ENDPOINT_XFER_INT, int8]]
+} [packed]
+
+usb_device_descriptor_go7007 {
+	inner	usb_device_descriptor_simple_t[0, 0, 0, 0xeb1, 0x7007, 0x202, const[1, int8], usb_config_descriptor_go7007]
+} [packed]
+
+usb_config_descriptor_go7007 {
+	inner	usb_config_descriptor_simple_t[const[1, int8], const[1, int8], const[USB_CONFIG_ATT_SELFPOWER, int8], usb_interface_descriptor_go7007]
+} [packed]
+
+usb_interface_descriptor_go7007 {
+	inner	usb_interface_descriptor_simple_t[const[0, int8], const[0, int8], const[4, int8], const[USB_CLASS_VENDOR_SPEC, int8], const[0, int8], const[0, int8], void, usb_endpoint_descriptors_go7007]
+} [packed]
+
+# Pipes on EZ-USB interface:
+#        0 snd - Control
+#        0 rcv - Control
+#        2 snd - Download firmware (control)
+#        4 rcv - Read Interrupt (interrupt)
+#        6 rcv - Read Video (bulk)
+#        8 rcv - Read Audio (bulk)
+
+usb_endpoint_descriptors_go7007 {
+# ctrl	usb_endpoint_descriptor_simple_t[const[0x0, int8], const[0, int8]]
+	fw	usb_endpoint_descriptor_simple_t[const[0x2, int8], const[0, int8]]
+	intr	usb_endpoint_descriptor_simple_t[const[0x84, int8], const[USB_ENDPOINT_XFER_INT, int8]]
+	bulk1	usb_endpoint_descriptor_simple_t[const[0x86, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+	bulk2	usb_endpoint_descriptor_simple_t[const[0x88, int8], const[USB_ENDPOINT_XFER_BULK, int8]]
+} [packed]
+
+usb_config_descriptor_simple {
+	inner	usb_config_descriptor_simple_t[const[1, int8], const[1, int8], const[USB_CONFIG_ATT_SELFPOWER, int8], usb_interface_descriptor_simple]
+} [packed]
+
+usb_interface_descriptor_simple {
+	inner	usb_interface_descriptor_simple_t[const[0, int8], int8, int8[1:2], const[0, int8], const[1, int8], const[0, int8], void, usb_endpoint_descriptors_simple]
+} [packed]
+
+usb_endpoint_descriptors_simple {
+	in	usb_endpoint_descriptor_simple_in
+	out	array[usb_endpoint_descriptor_simple_out, 1]
+} [packed]
+
+usb_endpoint_descriptor_simple_in {
+	inner	usb_endpoint_descriptor_simple_t[flags[usb_endpoint_addresses, int8], flags[usb_endpoint_attributes, int8]]
+} [packed]
+
+usb_endpoint_descriptor_simple_out {
+	inner	usb_endpoint_descriptor_simple_t[flags[usb_endpoint_addresses, int8], flags[usb_endpoint_attributes, int8]]
+} [packed]

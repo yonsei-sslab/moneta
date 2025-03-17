@@ -1,0 +1,13 @@
+diff --git a/utils.mk b/utils.mk
+index b29a709..cc4b636 100644
+--- a/utils.mk
++++ b/utils.mk
+@@ -39,7 +39,7 @@ AR                    ?= ar
+ # only set these warnings if CFLAGS is unset
+ CFLAGS                ?= -Wall
+ # always set these -f CFLAGS
+-CFLAGS                += -fno-strict-aliasing -fno-omit-frame-pointer -Wformat=2
++CFLAGS                += -fno-strict-aliasing -fno-omit-frame-pointer -Wformat=2 -g -fsanitize-coverage=trace-pc -fsanitize=kernel-address
+ CC_ONLY_CFLAGS        ?= -Wstrict-prototypes -Wold-style-definition
+ CXX_ONLY_CFLAGS       ?=
+ LDFLAGS               ?=

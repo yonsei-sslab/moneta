@@ -1,0 +1,9 @@
+/build/
+/workdir/
+/configs/syzkaller/generated/
+
+/go/bin/
+
+/guest/linux
+
+.vscode

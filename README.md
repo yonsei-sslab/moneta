@@ -124,3 +124,13 @@ cd $MONPATH/go/src/github.com/google/syzkaller
 
 ./bin/syz-manager -config $MONPATH/configs/syzkaller/generated/<CFG_FILE>.cfg
 ```
+
+## Citing our work
+```bibtex
+@inproceedings{jung2025moneta,
+  author    = {Jung, Joonkyo and Jang, Jisoo and Jo, Yongwan and Vinck, Jonas and Voulimeneas, Alexios and Volckaert, Stijn and Song, Dokyung},
+  title     = {{Moneta}: Ex-Vivo {GPU} Driver Fuzzing by Recalling In-Vivo Execution States},
+  booktitle = {Proceedings of the Network and Distributed System Security Symposium (NDSS)},
+  year      = {2025},
+}
+```

@@ -20,7 +20,7 @@ set -eux
 ./mkfifo.sh
 
 if [ $ARCH = x86_64 ]; then
-	LD_PRELOAD=$LIBAGAMOTTO ${QEMU} \
+	${QEMU} \
 		-m 2G \
 		-cpu host \
 		-kernel $KERNEL \

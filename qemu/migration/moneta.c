@@ -25,7 +25,7 @@ int moneta_savevm(void) {
         printf("QEMU: moneta: conditions are OK. It will take some time..\n");
         if (snapshot_count < MAX_SNAPSHOT_COUNT) {
             Error *err = NULL;
-            // char str[15] = "moneta";
+            char str[15] = "moneta";
             snapshot_count++;
             snprintf(str, sizeof(str), "moneta");
             printf("QEMU: moneta: saving snapshot, name: moneta\n", str);
